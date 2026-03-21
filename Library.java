@@ -30,6 +30,39 @@ public class Library{
         }
     }
 
+    // 借書
+    public void borrowBook(String isbn){
+        for(Book book : books){
+            if(book.getIsbn().equals(isbn)){
+                if(book.isAvailable()){
+                    book.setAvailable(false);
+                    System.out.println("你已成功借到: " + book.getTitle());
+                    return;
+                } else {
+                    System.out.println("很抱歉，" + book.getTitle() + " 已經被借出。");
+                    return;
+                }
+            }
+        }
+        System.out.println("找不到 ISBN 為「" + isbn + "」的書籍。");
+    }
+
+    public void returnBook(String isbn){
+        for(Book book : books){
+            if(book.getIsbn().equals(isbn)){
+                if(!book.isAvailable()){
+                    book.setAvailable(true);
+                    System.out.println("你已成功歸還: " + book.getTitle());
+                    return;
+                } else {
+                    System.out.println(book.getTitle() + " 並未被借出。");
+                    return;
+                }
+            }
+        }
+        System.out.println("找不到 ISBN 為「" + isbn + "」的書籍。");
+    }
+
     // 用書名搜尋書籍
     public Book searchByTitle(String keyword){
         for(Book book : books){

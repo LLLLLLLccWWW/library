@@ -7,12 +7,19 @@ public class Main{
         library.addBook(new Book("Python基礎", "李小華", "002"));
         library.addBook(new Book("C++進階", "張大偉", "003"));
 
-        library.listAllBooks();
-
         System.out.println("\n搜尋結果 :");
         Book foundBook = library.searchByTitle("Python");
         if(foundBook != null){
             System.out.println("找到書籍: " + foundBook);
         }
+
+        System.out.println("\n--- 借書測試 ---");
+        library.borrowBook("002");
+        library.borrowBook("002");
+        library.listAllBooks();
+
+        System.out.println("\n--- 歸還測試 ---");
+        library.returnBook("002");
+        library.listAllBooks();
     }
 }
