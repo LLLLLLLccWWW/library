@@ -1,6 +1,6 @@
 package com.library;
-import java.util.Scanner;
 import java.io.PrintStream;
+import java.util.Scanner;
 
 public class Main{
     public static void main(String[] args) throws Exception  {
@@ -9,15 +9,15 @@ public class Main{
         Library library = new Library("我的圖書館");
         Scanner scanner = new Scanner(System.in, "UTF-8");
 
-        library.addBook(new Book("Java入門", "王小明", "001"));
-        library.addBook(new Book("Python基礎", "李小華", "002"));
-        library.addBook(new Book("C++進階", "張大偉", "003"));
+        // library.addBook(new Book("Java入門", "王小明", "001"));
+        // library.addBook(new Book("Python基礎", "李小華", "002"));
+        // library.addBook(new Book("C++進階", "張大偉", "003"));
 
-        System.out.println("\n搜尋結果 :");
-        Book foundBook = library.searchByTitle("Python");
-        if(foundBook != null){
-            System.out.println("找到書籍: " + foundBook);
-        }
+        // System.out.println("\n搜尋結果 :");
+        // Book foundBook = library.searchByTitle("Python");
+        // if(foundBook != null){
+        //     System.out.println("找到書籍: " + foundBook);
+        // }
 
         // System.out.println("\n--- 借書測試 ---");
         // library.borrowBook("002");

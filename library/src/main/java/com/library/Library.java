@@ -1,21 +1,77 @@
 package com.library;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
-
 public class Library{
     private final String name;
     private final List<Book> books; // 書籍清單
+    private final String DB_URL = "jdbc:sqlite:library.db"; // SQLite 資料庫 URL
 
     // 建構子
     public Library(String name) {
         this.name = name;
         this.books = new ArrayList<>(); // 初始化書籍清單
+        initialDatabase(); // 初始化資料庫
+        loadFromDatabase(); // 從資料庫載入書籍
+        
+    }
+
+    private void initialDatabase(){
+        // 這裡可以放置初始化資料庫的程式碼，例如建立資料表、插入初始資料等
+        try(Connection conn = DriverManager.getConnection(DB_URL);
+            Statement stmt = conn.createStatement()){
+            String sql = """
+                    CREATE TABLE IF NOT EXISTS books (
+                    isbn TEXT PRIMARY KEY,
+                    title TEXT NOT NULL,
+                    author TEXT NOT NULL,
+                    isAvailable INTEGER DEFAULT 1
+                    )
+                """;
+            stmt.execute(sql);
+        } catch (SQLException e) {
+            System.out.println("資料庫初始化失敗: " + e.getMessage());
+        }
+    }
+    // 從資料庫載入書籍
+    private void loadFromDatabase() {
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT * FROM books")) {
+            books.clear(); // 清空目前的書籍清單
+            while(rs.next()){
+                Book book = new Book(
+                    rs.getString("title"),
+                    rs.getString("author"),
+                    rs.getString("isbn")
+                );
+                book.setAvailable(rs.getInt("isAvailable") == 1);
+                books.add(book);
+            }
+        } catch (SQLException e) {
+            System.out.println("載入失敗：" + e.getMessage());
+        }
     }
 
     // 新增書籍到圖書館
     public void addBook(Book book){
-        books.add(book);
-        System.out.println("書籍已新增到圖書館: " + book.getTitle());
+        String sql = "INSERT INTO books (isbn, title, author, isAvailable) VALUES (?, ?, ?, ?)";
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, book.getIsbn());
+            pstmt.setString(2, book.getTitle());
+            pstmt.setString(3, book.getAuthor());
+            pstmt.executeUpdate();
+            books.add(book); // 同步新增到內存清單
+            System.out.println("書籍已新增到圖書館: " + book.getTitle());
+        } catch (SQLException e) {
+            System.out.println("新增書籍失敗：" + e.getMessage());
+        }
     }
 
     // 列出圖書館的所有書籍
@@ -64,6 +120,18 @@ public class Library{
         System.out.println("找不到 ISBN 為「" + isbn + "」的書籍。");
     }
 
+    // 更新資料庫的借閱狀態
+    private  void updateDatabase(Book book){
+        String sql = "UPDATE books SET isAvailable = ? WHERE isbn = ?";
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, book.isAvailable() ? 1 : 0);
+            pstmt.setString(2, book.getIsbn());
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            System.out.println("更新資料庫失敗：" + e.getMessage());
+        }
+    }
     // 用書名搜尋書籍
     public Book searchByTitle(String keyword){
         for(Book book : books){
