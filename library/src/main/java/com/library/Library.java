@@ -93,6 +93,7 @@ public class Library{
             if(book.getIsbn().equals(isbn)){
                 if(book.isAvailable()){
                     book.setAvailable(false);
+                    updateDatabase(book);
                     System.out.println("你已成功借到: " + book.getTitle());
                     return;
                 } else {
@@ -109,6 +110,7 @@ public class Library{
             if(book.getIsbn().equals(isbn)){
                 if(!book.isAvailable()){
                     book.setAvailable(true);
+                    updateDatabase(book);
                     System.out.println("你已成功歸還: " + book.getTitle());
                     return;
                 } else {
