@@ -127,12 +127,19 @@ public class Library{
         String sql = "DELETE FROM BOOKS WHERE isbn = ?";
         try (Connection conn = DriverManager.getConnection(DB_URL);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, isbn);
-            int rows = pstmt.executeUpdate();
-            if(rows > 0){
-                books.removeIf(book -> book.getIsbn().equals(isbn)); // 同步從內存清單刪除
+            pstmt.setString(1, isbn);  // 將 isbn 填入 SQL 的第一個 ? 佔位符
+
+            int rows = pstmt.executeUpdate();  // 執行 SQL，回傳受影響的行數
+
+            if (rows > 0) {  // 如果影響行數大於 0，表示有找到並刪除該書
+                
+                // removeIf 會遍歷 books 清單，把符合條件的書移除
+                // book -> book.getIsbn().equals(isbn) 是 Lambda 表達式
+                // 意思是：「對於每一本 book，如果它的 isbn 等於我們要刪的 isbn 就移除」
+                books.removeIf(book -> book.getIsbn().equals(isbn));
+                
                 System.out.println("書籍已刪除: " + isbn);
-            } else {
+            } else {  // 影響行數為 0，表示資料庫裡找不到這個 isbn
                 System.out.println("找不到 ISBN 為「" + isbn + "」的書籍，無法刪除。");
             }
         } catch (SQLException e) {
