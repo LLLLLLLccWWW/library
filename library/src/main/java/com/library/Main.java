@@ -37,6 +37,7 @@ public class Main{
             System.out.println("3. 借書");
             System.out.println("4. 還書");
             System.out.println("5. 新增書籍");
+            System.err.println("6. 刪除書籍");
             System.out.println("0. 離開");
             System.out.print("請輸入選項：");
 
@@ -79,7 +80,12 @@ public class Main{
                     String isbn = scanner.nextLine();
                     library.addBook(new Book(title, author, isbn));
                     break;
-
+                
+                case 6:
+                    System.out.println("請輸入要刪除的書籍 ISBN：");
+                    String deleteIsbn = scanner.nextLine();
+                    library.deleteBook(deleteIsbn);
+                    break;
                 case 0:
                     System.out.println("感謝使用圖書館系統！");
                     break;

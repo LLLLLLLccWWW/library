@@ -122,6 +122,24 @@ public class Library{
         System.out.println("找不到 ISBN 為「" + isbn + "」的書籍。");
     }
 
+    // 刪除書籍
+    public void deleteBook(String isbn){
+        String sql = "DELETE FROM BOOKS WHERE isbn = ?";
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, isbn);
+            int rows = pstmt.executeUpdate();
+            if(rows > 0){
+                books.removeIf(book -> book.getIsbn().equals(isbn)); // 同步從內存清單刪除
+                System.out.println("書籍已刪除: " + isbn);
+            } else {
+                System.out.println("找不到 ISBN 為「" + isbn + "」的書籍，無法刪除。");
+            }
+        } catch (SQLException e) {
+            System.out.println("刪除書籍失敗：" + e.getMessage());
+        }
+    }
+
     // 更新資料庫的借閱狀態
     private  void updateDatabase(Book book){
         String sql = "UPDATE books SET isAvailable = ? WHERE isbn = ?";
