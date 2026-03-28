@@ -34,6 +34,26 @@ public class Library{
                     )
                 """;
             stmt.execute(sql);
+            // 初始化資料庫時加入這兩張新表（放在 initialDatabase() 裡）
+            String memberSql = """
+                CREATE TABLE IF NOT EXISTS members (
+                    member_id TEXT PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    phone TEXT
+                )
+            """;
+            stmt.execute(memberSql);
+
+            String borrowSql = """
+                CREATE TABLE IF NOT EXISTS borrow_records (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    isbn TEXT NOT NULL,
+                    member_id TEXT NOT NULL,
+                    borrow_date TEXT NOT NULL,
+                    return_date TEXT
+                )
+            """;
+            stmt.execute(borrowSql);
         } catch (SQLException e) {
             System.out.println("資料庫初始化失敗: " + e.getMessage());
         }
@@ -55,6 +75,41 @@ public class Library{
             }
         } catch (SQLException e) {
             System.out.println("載入失敗：" + e.getMessage());
+        }
+    }
+
+    // 新增會員
+    public void addMember(Member member){
+        String sql = "INSERT INTO members (member_id, name, phone) VALUES (?, ?, ?)";
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, member.getMemberId());
+            pstmt.setString(2, member.getName());
+            pstmt.setString(3, member.getPhone());
+            pstmt.executeUpdate();
+            System.out.println("會員已新增: " + member.getName());
+        } catch (SQLException e) {
+            System.out.println("新增會員失敗：" + e.getMessage());
+        }
+    }
+
+    // 列出所有會員
+    public void listAllMembers(){
+        String sql = "SELECT * FROM members";
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            System.out.println("圖書館的所有會員：");
+            while(rs.next()){
+                Member member = new Member(
+                    rs.getString("name"),
+                    rs.getString("member_id"),
+                    rs.getString("phone")
+                );
+                System.out.println(member);
+            }
+        } catch (SQLException e) {
+            System.out.println("載入會員失敗：" + e.getMessage());
         }
     }
 
@@ -88,12 +143,21 @@ public class Library{
     }
 
     // 借書
-    public void borrowBook(String isbn){
+    public void borrowBook(String isbn, String memberId){
         for(Book book : books){
             if(book.getIsbn().equals(isbn)){
                 if(book.isAvailable()){
                     book.setAvailable(false);
                     updateDatabase(book);
+                    String sql = "INSERT INTO borrow_records (isbn, member_id, borrow_date) VALUES (?, ?, datetime('now'))";
+                    try (Connection conn = DriverManager.getConnection(DB_URL);
+                         PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                        pstmt.setString(1, isbn);
+                        pstmt.setString(2, memberId);
+                        pstmt.executeUpdate();
+                    } catch (SQLException e) {
+                        System.out.println("記錄借閱失敗：" + e.getMessage());
+                    }
                     System.out.println("你已成功借到: " + book.getTitle());
                     return;
                 } else {
@@ -105,12 +169,56 @@ public class Library{
         System.out.println("找不到 ISBN 為「" + isbn + "」的書籍。");
     }
 
-    public void returnBook(String isbn){
+    // 查詢某會員的借閱記錄
+    public void listBorrowRecords(String memberId) {
+        String sql = """
+            SELECT b.title, r.borrow_date, r.return_date
+            FROM borrow_records r
+            JOIN books b ON r.isbn = b.isbn
+            WHERE r.member_id = ?
+        """;
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+            PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, memberId);
+            ResultSet rs = pstmt.executeQuery();
+            System.out.println("=== 會員 " + memberId + " 的借閱記錄 ===");
+            boolean hasRecords = false;
+            while (rs.next()) {
+                hasRecords = true;
+                String returnDate = rs.getString("return_date") != null
+                    ? rs.getString("return_date") : "未歸還";
+                System.out.println(rs.getString("title")
+                    + " | 借出：" + rs.getString("borrow_date")
+                    + " | 歸還：" + returnDate);
+            }
+            if (!hasRecords) System.out.println("沒有借閱記錄。");
+        } catch (SQLException e) {
+            System.out.println("查詢失敗：" + e.getMessage());
+        }
+    }
+
+    public void returnBook(String isbn,String memberId){
         for(Book book : books){
             if(book.getIsbn().equals(isbn)){
                 if(!book.isAvailable()){
                     book.setAvailable(true);
                     updateDatabase(book);
+                    String sql = """
+                        UPDATE borrow_records SET return_date = datetime('now')
+                        WHERE id = (
+                            SELECT id FROM borrow_records
+                            WHERE isbn = ? AND member_id = ? AND return_date IS NULL
+                            ORDER BY borrow_date ASC LIMIT 1
+                        )
+                    """;
+                    try (Connection conn = DriverManager.getConnection(DB_URL);
+                         PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                        pstmt.setString(1, isbn);
+                        pstmt.setString(2, memberId);
+                        pstmt.executeUpdate();
+                    } catch (SQLException e) {
+                        System.out.println("更新借閱記錄失敗：" + e.getMessage());
+                    }
                     System.out.println("你已成功歸還: " + book.getTitle());
                     return;
                 } else {

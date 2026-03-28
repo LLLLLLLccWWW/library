@@ -1,4 +1,5 @@
 com\library\Book.class
+com\library\Member.class
 com\library\App.class
 com\library\Library.class
 com\library\Main.class

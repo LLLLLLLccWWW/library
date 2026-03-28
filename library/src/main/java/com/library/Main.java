@@ -37,7 +37,10 @@ public class Main{
             System.out.println("3. 借書");
             System.out.println("4. 還書");
             System.out.println("5. 新增書籍");
-            System.err.println("6. 刪除書籍");
+            System.out.println("6. 刪除書籍");
+            System.out.println("7. 新增會員");
+            System.out.println("8. 列出所有會員");
+            System.out.println("9. 查詢借閱記錄");
             System.out.println("0. 離開");
             System.out.print("請輸入選項：");
 
@@ -62,13 +65,17 @@ public class Main{
                 case 3:
                     System.out.print("請輸入要借的書籍 ISBN：");
                     String borrowIsbn = scanner.nextLine();
-                    library.borrowBook(borrowIsbn);
+                    System.out.print("請輸入會員ID：");
+                    String memberId = scanner.nextLine();
+                    library.borrowBook(borrowIsbn, memberId);
                     break;
 
                 case 4:
                     System.out.print("請輸入要還的書籍 ISBN：");
                     String returnIsbn = scanner.nextLine();
-                    library.returnBook(returnIsbn);
+                    System.out.print("請輸入會員ID：");
+                    String returnMemberId = scanner.nextLine();
+                    library.returnBook(returnIsbn,returnMemberId);
                     break;
 
                 case 5:
@@ -85,6 +92,24 @@ public class Main{
                     System.out.println("請輸入要刪除的書籍 ISBN：");
                     String deleteIsbn = scanner.nextLine();
                     library.deleteBook(deleteIsbn);
+                    break;
+                case 7:
+                    System.out.print("請輸入會員姓名：");
+                    String name = scanner.nextLine();
+                    System.out.print("請輸入會員編號：");
+                    String newMemberId = scanner.nextLine();
+                    System.out.print("請輸入會員電話：");
+                    String phone = scanner.nextLine();
+                    Member member = new Member(name, newMemberId, phone);
+                    library.addMember(member);
+                    break;
+                case 8:
+                    library.listAllMembers();
+                    break;
+                case 9:
+                    System.out.println("請輸入會員 ID:");
+                    String MemberId = scanner.nextLine();
+                    library.listBorrowRecords(MemberId);
                     break;
                 case 0:
                     System.out.println("感謝使用圖書館系統！");
